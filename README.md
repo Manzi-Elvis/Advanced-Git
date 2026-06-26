@@ -1,6 +1,6 @@
 # Git Advanced
 
-A repository dedicated to mastering Git from beginner to advanced concepts through hands-on exercises.
+A repository dedicated to mastering Git to advanced concepts through hands-on exercises.
 
 ## Topics Covered
 
