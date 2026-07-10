@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Elvis Manzi | Advanced Git — Commit Graph Portfolio</title>
+<meta name="description" content="A hands-on Advanced Git portfolio: history rewriting, branching, merging, rebasing, conflicts, and 30 real, documented challenges." />
+
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          ink:     '#0B0F14',
+          surface: '#11161D',
+          surface2:'#161C25',
+          line:    '#1F2733',
+          text:    '#E6EDF3',
+          muted:   '#8B98A5',
+          add:     '#3FB950',
+          del:     '#F85149',
+          head:    '#E3B341',
+          merge:   '#A371F7',
+          accent:  '#2DD4BF',
+        },
+        fontFamily: {
+          mono: ['"JetBrains Mono"', 'ui-monospace', 'monospace'],
+          sans: ['Inter', 'ui-sans-serif', 'system-ui'],
+        },
+      }
+    }
+  }
+</script>
+
+<style>
+  ::selection { background: #2DD4BF33; color: #E6EDF3; }
+  html { scroll-behavior: smooth; }
+  body {
+    background-color: #0B0F14;
+    background-image:
+      radial-gradient(circle at 12% 8%, #A371F71a, transparent 40%),
+      radial-gradient(circle at 88% 18%, #2DD4BF14, transparent 40%),
+      linear-gradient(#1F273312 1px, transparent 1px),
+      linear-gradient(90deg, #1F273312 1px, transparent 1px);
+    background-size: auto, auto, 44px 44px, 44px 44px;
+  }
+  ::-webkit-scrollbar { width: 10px; }
+  ::-webkit-scrollbar-track { background: #0B0F14; }
+  ::-webkit-scrollbar-thumb { background: #1F2733; border-radius: 999px; }
+  ::-webkit-scrollbar-thumb:hover { background: #2DD4BF55; }
+
+  .reveal { opacity: 0; transform: translateY(18px); transition: opacity .6s ease, transform .6s ease; }
+  .reveal.in { opacity: 1; transform: translateY(0); }
+
+  .graph-line { stroke-dasharray: 400; stroke-dashoffset: 400; animation: draw 1.8s ease forwards; }
+  @keyframes draw { to { stroke-dashoffset: 0; } }
+
+  .caret { animation: blink 1s step-end infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
+
+  a:focus-visible, button:focus-visible { outline: 2px solid #2DD4BF; outline-offset: 3px; border-radius: 4px; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .reveal { opacity: 1 !important; transform: none !important; transition: none !important; }
+    .graph-line { stroke-dashoffset: 0; animation: none; }
+    .caret { animation: none; }
+    html { scroll-behavior: auto; }
+  }
+</style>
+</head>
+
+<body class="text-text font-sans overflow-x-hidden">
+
+<!-- ============ HEADER / HERO ============ -->
+<header class="min-h-screen flex items-center justify-center px-5 sm:px-8 py-20">
+  <div class="max-w-4xl w-full">
+
+    <div class="flex justify-center mb-8">
+      <span class="inline-flex items-center gap-2 font-mono text-xs sm:text-sm px-4 py-2 rounded-full border border-line bg-surface text-accent">
+        <span class="w-1.5 h-1.5 rounded-full bg-add"></span>
+        30 challenges · 3 parts · one real git history
+      </span>
+    </div>
+
+    <!-- Terminal window -->
+    <div class="rounded-2xl border border-line bg-surface shadow-[0_30px_80px_-20px_rgba(0,0,0,0.6)] overflow-hidden">
+      <div class="flex items-center gap-2 px-4 py-3 border-b border-line bg-surface2">
+        <span class="w-3 h-3 rounded-full bg-del"></span>
+        <span class="w-3 h-3 rounded-full bg-head"></span>
+        <span class="w-3 h-3 rounded-full bg-add"></span>
+        <span class="ml-3 font-mono text-xs text-muted">elvis@advanced-git — main</span>
+      </div>
+
+      <div class="p-5 sm:p-8 font-mono text-sm sm:text-base">
+        <p class="text-muted">
+          <span class="text-accent">elvis@advanced-git</span>:<span class="text-merge">~/Advanced-Git</span>$
+          <span id="cmdTyping"></span><span class="caret">▌</span>
+        </p>
+
+        <div class="mt-6 text-left">
+          <h1 class="font-mono font-extrabold leading-tight text-3xl sm:text-5xl md:text-6xl text-text">
+            Hi, I'm <span class="text-accent">Elvis</span><span class="text-muted">.</span>
+          </h1>
+          <p class="mt-2 font-mono text-xs sm:text-sm text-muted">
+            commit author · <span class="text-head">HEAD -&gt; main</span> · 30 challenges merged, none squashed away
+          </p>
+        </div>
+
+        <div class="mt-6 min-h-[2.5rem] text-lg sm:text-2xl text-merge font-mono" id="typing"></div>
+      </div>
+    </div>
+
+    <p class="text-muted text-base sm:text-lg leading-relaxed max-w-2xl mx-auto mt-10 text-center">
+      This is a portfolio built on top of a real Git repository — every rebase, squash, conflict,
+      and detached HEAD below actually happened in my terminal. I documented each one so I could
+      come back and understand it again, not just remember that it worked once.
+    </p>
+
+    <div class="flex flex-wrap gap-4 justify-center mt-8">
+      <a href="#timeline" class="px-6 py-3.5 rounded-xl font-semibold bg-gradient-to-r from-accent to-merge text-ink hover:-translate-y-1 hover:shadow-[0_20px_40px_-10px_rgba(45,212,191,0.35)] transition">
+        View the Commit Graph
+      </a>
+      <a href="#concepts" class="px-6 py-3.5 rounded-xl font-semibold border border-line bg-surface text-text hover:-translate-y-1 hover:border-accent transition">
+        What I Actually Learned
+      </a>
+    </div>
+  </div>
+</header>
+
+<!-- ============ ABOUT ============ -->
+<section id="about" class="px-5 sm:px-8 lg:px-[8%] py-24">
+  <h2 class="font-mono text-3xl sm:text-4xl font-bold text-center mb-3">About This Repository</h2>
+  <p class="text-muted text-center max-w-2xl mx-auto mb-16 leading-relaxed">
+    Three commits, three ideas — this is what the repository is actually built out of.
+  </p>
+
+  <div class="grid gap-6 md:grid-cols-3 max-w-6xl mx-auto">
+
+    <article class="reveal rounded-2xl border border-line bg-gradient-to-b from-surface to-surface2 p-7 hover:-translate-y-2 hover:border-accent/60 transition">
+      <div class="flex items-center justify-between font-mono text-xs mb-4">
+        <span class="text-accent">#7ea480e</span>
+        <span class="text-add">+history</span>
+      </div>
+      <h3 class="font-mono font-semibold text-lg mb-2 text-text">Rewrite history on purpose</h3>
+      <p class="text-muted text-sm leading-relaxed">
+        Amend, reword, squash, split, drop, and reorder commits with interactive rebase —
+        until a messy history becomes a clean, honest one.
+      </p>
+    </article>
+
+    <article class="reveal rounded-2xl border border-line bg-gradient-to-b from-surface to-surface2 p-7 hover:-translate-y-2 hover:border-merge/60 transition" style="transition-delay:.08s">
+      <div class="flex items-center justify-between font-mono text-xs mb-4">
+        <span class="text-merge">#227cbfd</span>
+        <span class="text-head">merge</span>
+      </div>
+      <h3 class="font-mono font-semibold text-lg mb-2 text-text">Branch, diverge, reconcile</h3>
+      <p class="text-muted text-sm leading-relaxed">
+        Create, switch, rename, and delete branches — then bring them back together with
+        merge or rebase, and know exactly which one I'm choosing and why.
+      </p>
+    </article>
+
+    <article class="reveal rounded-2xl border border-line bg-gradient-to-b from-surface to-surface2 p-7 hover:-translate-y-2 hover:border-del/60 transition" style="transition-delay:.16s">
+      <div class="flex items-center justify-between font-mono text-xs mb-4">
+        <span class="text-del">CONFLICT</span>
+        <span class="text-add">resolved</span>
+      </div>
+      <h3 class="font-mono font-semibold text-lg mb-2 text-text">Break things, then fix them</h3>
+      <p class="text-muted text-sm leading-relaxed">
+        Real merge conflicts, resolved by hand and with a visual mergetool. Stashing,
+        tagging, ignoring files, and syncing with a genuinely diverged remote.
+      </p>
+    </article>
+
+  </div>
+</section>
+
+<!-- ============ SKILLS ============ -->
+<section id="skills" class="px-5 sm:px-8 lg:px-[8%] py-24 bg-surface/40 border-y border-line">
+  <h2 class="font-mono text-3xl sm:text-4xl font-bold text-center mb-3">Skills Practiced</h2>
+  <p class="text-muted text-center max-w-2xl mx-auto mb-16 leading-relaxed">
+    Grouped like the branches they came from.
+  </p>
+
+  <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-4 max-w-6xl mx-auto">
+
+    <div class="reveal rounded-2xl border border-line bg-surface p-6">
+      <span class="font-mono text-xs text-accent">ft/git-basics</span>
+      <h3 class="font-mono font-semibold text-text mt-2 mb-4">Foundations</h3>
+      <ul class="space-y-2 font-mono text-sm text-muted">
+        <li>git init · add · commit</li>
+        <li>git status · log</li>
+        <li>git commit --amend</li>
+        <li>.gitignore rules</li>
+      </ul>
+    </div>
+
+    <div class="reveal rounded-2xl border border-line bg-surface p-6" style="transition-delay:.06s">
+      <span class="font-mono text-xs text-merge">ft/history-rewriting</span>
+      <h3 class="font-mono font-semibold text-text mt-2 mb-4">Interactive Rebase</h3>
+      <ul class="space-y-2 font-mono text-sm text-muted">
+        <li>reword · squash · drop</li>
+        <li>reorder commits</li>
+        <li>split via git reset</li>
+        <li>git reflog recovery</li>
+      </ul>
+    </div>
+
+    <div class="reveal rounded-2xl border border-line bg-surface p-6" style="transition-delay:.12s">
+      <span class="font-mono text-xs text-head">ft/branching</span>
+      <h3 class="font-mono font-semibold text-text mt-2 mb-4">Branch Workflows</h3>
+      <ul class="space-y-2 font-mono text-sm text-muted">
+        <li>merge vs. rebase</li>
+        <li>cherry-pick</li>
+        <li>local vs. remote tracking</li>
+        <li>detached HEAD</li>
+      </ul>
+    </div>
+
+    <div class="reveal rounded-2xl border border-line bg-surface p-6" style="transition-delay:.18s">
+      <span class="font-mono text-xs text-del">ft/collaboration</span>
+      <h3 class="font-mono font-semibold text-text mt-2 mb-4">Real Collaboration</h3>
+      <ul class="space-y-2 font-mono text-sm text-muted">
+        <li>stash · pop</li>
+        <li>conflict resolution</li>
+        <li>tags · releases</li>
+        <li>push / pull, diverged</li>
+      </ul>
+    </div>
+
+  </div>
+</section>
+
+<!-- ============ TIMELINE / COMMIT GRAPH ============ -->
+<section id="timeline" class="px-5 sm:px-8 lg:px-[8%] py-24">
+  <h2 class="font-mono text-3xl sm:text-4xl font-bold text-center mb-3">The Commit Graph</h2>
+  <p class="text-muted text-center max-w-2xl mx-auto mb-6 leading-relaxed">
+    <code class="text-accent">git log --oneline --graph --all</code> — order matters here, so it's shown as one.
+  </p>
+
+  <div class="max-w-3xl mx-auto">
+
+    <!-- decorative connecting line -->
+    <div class="relative">
+      <div class="absolute left-[15px] sm:left-[19px] top-2 bottom-2 w-px bg-line" aria-hidden="true"></div>
+
+      <div class="space-y-10">
+
+        <!-- PART LABEL -->
+        <div class="reveal flex items-center gap-4 pl-0">
+          <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-ink border-2 border-accent flex items-center justify-center font-mono text-xs text-accent shrink-0">I</div>
+          <h3 class="font-mono text-lg sm:text-xl font-bold text-text">Part 1 — Refining Git History</h3>
+        </div>
+
+        <div class="reveal flex gap-4 pl-0">
+          <div class="w-8 sm:w-10 flex justify-center shrink-0">
+            <span class="w-3 h-3 rounded-full bg-accent mt-1.5 ring-4 ring-ink"></span>
+          </div>
+          <div class="rounded-xl border border-line bg-surface p-5 flex-1">
+            <p class="font-mono text-xs text-accent mb-1">#9901cbf</p>
+            <h4 class="font-semibold text-text mb-1">Amend, reword, squash, split, drop, reorder</h4>
+            <p class="text-muted text-sm leading-relaxed">Ten challenges in interactive rebase — including recovering from a stuck rebase and learning why <code class="text-head">HEAD~3</code> fails when you mean <code class="text-head">--root</code>.</p>
+          </div>
+        </div>
+
+        <div class="reveal flex gap-4 pl-0" style="transition-delay:.05s">
+          <div class="w-8 sm:w-10 flex justify-center shrink-0">
+            <span class="w-3 h-3 rounded-full bg-accent mt-1.5 ring-4 ring-ink"></span>
+          </div>
+          <div class="rounded-xl border border-line bg-surface p-5 flex-1">
+            <p class="font-mono text-xs text-accent mb-1">#33db0d4</p>
+            <h4 class="font-semibold text-text mb-1">Cherry-pick, graph, reflog</h4>
+            <p class="text-muted text-sm leading-relaxed">Selectively copied a single commit across branches, then learned that <code class="text-head">git reflog</code> remembers every mistake I made along the way — a real safety net.</p>
+          </div>
+        </div>
+
+        <!-- PART 2 -->
+        <div class="reveal flex items-center gap-4 pl-0">
+          <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-ink border-2 border-merge flex items-center justify-center font-mono text-xs text-merge shrink-0">II</div>
+          <h3 class="font-mono text-lg sm:text-xl font-bold text-text">Part 2 — Branching Basics</h3>
+        </div>
+
+        <div class="reveal flex gap-4 pl-0">
+          <div class="w-8 sm:w-10 flex justify-center shrink-0">
+            <span class="w-3 h-3 rounded-full bg-merge mt-1.5 ring-4 ring-ink"></span>
+          </div>
+          <div class="rounded-xl border border-line bg-surface p-5 flex-1">
+            <p class="font-mono text-xs text-merge mb-1">#227cbfd</p>
+            <h4 class="font-semibold text-text mb-1">Merge branch 'ft/new-branch-from-commit'</h4>
+            <p class="text-muted text-sm leading-relaxed">A genuine three-way merge — two diverged parents joined by one commit, history fully preserved on both sides.</p>
+          </div>
+        </div>
+
+        <div class="reveal flex gap-4 pl-0" style="transition-delay:.05s">
+          <div class="w-8 sm:w-10 flex justify-center shrink-0">
+            <span class="w-3 h-3 rounded-full bg-merge mt-1.5 ring-4 ring-ink"></span>
+          </div>
+          <div class="rounded-xl border border-line bg-surface p-5 flex-1">
+            <p class="font-mono text-xs text-merge mb-1">#4459abe</p>
+            <h4 class="font-semibold text-text mb-1">Rebase onto main — same goal, straight line</h4>
+            <p class="text-muted text-sm leading-relaxed">Same integration, opposite shape: rebase replayed the branch on top of <code class="text-head">main</code> with zero merge commits. Then, on purpose, went looking for detached HEAD.</p>
+          </div>
+        </div>
+
+        <!-- PART 3 -->
+        <div class="reveal flex items-center gap-4 pl-0">
+          <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-ink border-2 border-del flex items-center justify-center font-mono text-xs text-del shrink-0">III</div>
+          <h3 class="font-mono text-lg sm:text-xl font-bold text-text">Part 3 — Advanced Workflows</h3>
+        </div>
+
+        <div class="reveal flex gap-4 pl-0">
+          <div class="w-8 sm:w-10 flex justify-center shrink-0">
+            <span class="w-3 h-3 rounded-full bg-del mt-1.5 ring-4 ring-ink"></span>
+          </div>
+          <div class="rounded-xl border border-line bg-surface p-5 flex-1">
+            <p class="font-mono text-xs text-del mb-1">CONFLICT (content): readme.txt</p>
+            <h4 class="font-semibold text-text mb-1">Resolved by hand, then with a mergetool</h4>
+            <p class="text-muted text-sm leading-relaxed">My first "conflict demo" fast-forwarded instead — no real divergence, no conflict. Forced genuine competing changes on both sides to trigger, then resolve, a real one.</p>
+          </div>
+        </div>
+
+        <div class="reveal flex gap-4 pl-0" style="transition-delay:.05s">
+          <div class="w-8 sm:w-10 flex justify-center shrink-0">
+            <span class="w-3 h-3 rounded-full bg-head mt-1.5 ring-4 ring-ink"></span>
+          </div>
+          <div class="rounded-xl border border-line bg-surface p-5 flex-1">
+            <p class="font-mono text-xs text-head mb-1">tag: v1.0</p>
+            <h4 class="font-semibold text-text mb-1">Tags, stashing, and a real diverged pull</h4>
+            <p class="text-muted text-sm leading-relaxed">Tagged a release, stashed and restored in-progress work, then pulled a remote that had moved on without me — resolved automatically by a real merge commit.</p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ CONCEPTS ============ -->
+<section id="concepts" class="px-5 sm:px-8 lg:px-[8%] py-24 bg-surface/40 border-y border-line">
+  <h2 class="font-mono text-3xl sm:text-4xl font-bold text-center mb-3">What I Actually Understand Now</h2>
+  <p class="text-muted text-center max-w-2xl mx-auto mb-16 leading-relaxed">
+    Not command syntax — the reasoning underneath it.
+  </p>
+
+  <div class="grid gap-6 md:grid-cols-2 max-w-5xl mx-auto">
+
+    <div class="reveal rounded-2xl border border-line bg-surface p-7">
+      <h3 class="font-mono font-semibold text-accent mb-2">Rebase rewrites. Merge preserves.</h3>
+      <p class="text-muted text-sm leading-relaxed">A commit's hash depends on its content and its parent's hash. Touch one commit, and everything built on top of it gets a new hash — even if nothing else changed. Rebase leans into that; merge deliberately avoids it.</p>
+    </div>
+
+    <div class="reveal rounded-2xl border border-line bg-surface p-7" style="transition-delay:.05s">
+      <h3 class="font-mono font-semibold text-merge mb-2">Nothing is really gone until it's collected.</h3>
+      <p class="text-muted text-sm leading-relaxed"><code class="text-head">git reflog</code> tracks every HEAD movement, separately from <code class="text-head">git log</code>. Almost any mistake — a bad rebase, a wrong reset — is recoverable if I catch it before garbage collection.</p>
+    </div>
+
+    <div class="reveal rounded-2xl border border-line bg-surface p-7" style="transition-delay:.1s">
+      <h3 class="font-mono font-semibold text-head mb-2">Detached HEAD isn't broken — it's just unlabeled.</h3>
+      <p class="text-muted text-sm leading-relaxed">HEAD normally points at a branch name, which points at a commit. Check out a raw hash, and HEAD points straight at the commit instead. Fine to explore; risky only if I commit and walk away without a branch to hold it.</p>
+    </div>
+
+    <div class="reveal rounded-2xl border border-line bg-surface p-7" style="transition-delay:.15s">
+      <h3 class="font-mono font-semibold text-del mb-2">Conflicts need real divergence.</h3>
+      <p class="text-muted text-sm leading-relaxed">Two branches only conflict if both sides changed the same lines independently after splitting. Learned this the honest way — my first attempt just fast-forwarded with nothing to resolve.</p>
+    </div>
+
+  </div>
+</section>
+
+<!-- ============ FOOTER ============ -->
+<footer class="px-5 sm:px-8 py-14 text-center border-t border-line bg-ink">
+  <p class="font-mono text-sm text-text">MANZI RURANGIRWA Elvis</p>
+  <p class="font-mono text-xs text-muted mt-2">
+    <span class="text-accent">$</span> git log --author="Elvis" --oneline | wc -l
+    <span class="text-head">→ 30 challenges, one commit at a time</span>
+  </p>
+</footer>
+
+<button id="topBtn" aria-label="Back to top" class="fixed bottom-6 right-6 hidden items-center justify-center w-12 h-12 rounded-full bg-accent text-ink font-bold shadow-[0_10px_30px_-5px_rgba(45,212,191,0.5)] hover:-translate-y-1 transition">
+  ↑
+</button>
+
+<script>
+  // ---- Typing effect ----
+  const words = [
+    "git rebase -i --root",
+    "Rebase vs. merge, on purpose",
+    "Conflicts resolved, not avoided",
+    "git reflog is my safety net",
+  ];
+  let wordIndex = 0, charIndex = 0, isDeleting = false;
+  const typingEl = document.getElementById("typing");
+
+  function typeEffect() {
+    const current = words[wordIndex];
+    typingEl.textContent = isDeleting
+      ? current.substring(0, charIndex--)
+      : current.substring(0, charIndex++);
+
+    if (!isDeleting && charIndex === current.length + 1) {
+      isDeleting = true;
+      setTimeout(typeEffect, 1300);
+      return;
+    }
+    if (isDeleting && charIndex === 0) {
+      isDeleting = false;
+      wordIndex = (wordIndex + 1) % words.length;
+    }
+    setTimeout(typeEffect, isDeleting ? 45 : 85);
+  }
+  typeEffect();
+
+  // ---- Terminal command one-shot type ----
+  const cmd = 'git log --oneline --graph --all';
+  const cmdEl = document.getElementById("cmdTyping");
+  let ci = 0;
+  function typeCmd() {
+    if (ci <= cmd.length) {
+      cmdEl.textContent = cmd.substring(0, ci++);
+      setTimeout(typeCmd, 55);
+    }
+  }
+  typeCmd();
+
+  // ---- Scroll reveal ----
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add("in");
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.15 });
+
+  document.querySelectorAll(".reveal").forEach(el => observer.observe(el));
+
+  // ---- Back to top ----
+  const topBtn = document.getElementById("topBtn");
+  window.addEventListener("scroll", () => {
+    const show = window.scrollY > 500;
+    topBtn.classList.toggle("hidden", !show);
+    topBtn.classList.toggle("flex", show);
+  });
+  topBtn.addEventListener("click", () => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  });
+</script>
+
+</body>
+</html>
